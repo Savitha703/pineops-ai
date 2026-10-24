@@ -1,6 +1,13 @@
+
 # PineOps AI — AI-Powered Incident Analyzer
 
 **Incident Intelligence | Technology Operations**
+
+🌐 **Live Demo:** [https://pineops-ai.vercel.app](https://pineops-ai.vercel.app)
+
+**GitHub Repository:** [PineOps AI](https://github.com/Savitha703/pineops-ai)
+
+---
 
 PineOps AI is a working AI-powered incident analysis prototype designed to help Technology Operations and L1/L2 support engineers investigate issues in simulated application logs. It detects recurring failures, assesses incident severity, summarizes likely causes, recommends troubleshooting and escalation steps, and produces a shareable two-page PDF incident report.
 

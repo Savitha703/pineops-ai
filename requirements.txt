@@ -3,3 +3,4 @@ google-genai>=1.50,<3
 python-dotenv>=1.1,<2
 httpx>=0.28,<1
 reportlab>=4.2,<5
+psycopg[binary]>=3.2,<4

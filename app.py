@@ -11,6 +11,7 @@ from werkzeug.exceptions import HTTPException
 from gemini_service import DEFAULT_MODEL as DEFAULT_GEMINI_MODEL, add_ai_guidance as add_gemini_guidance, key_is_configured as gemini_key_is_configured
 from incident_analyzer import analyze_logs, parse_lines, redact_secrets
 from incident_store import IncidentStore, StorageError
+from postgres_incident_store import PostgresIncidentStore
 from incident_chat import ask_incident_question, sanitize_question, sanitize_history
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -32,7 +33,11 @@ def create_app(test_config=None):
         raise ValueError("AI_PROVIDER must be gemini or rules.")
     # Allow modest multipart/JSON overhead; the actual log has a separate limit.
     app.config["MAX_CONTENT_LENGTH"] = app.config["MAX_LOG_BYTES"] + 65536
-    store = IncidentStore(app.config["INCIDENT_FILE"])
+    store = (
+        PostgresIncidentStore(os.environ["DATABASE_URL"])
+        if os.environ.get("DATABASE_URL") and test_config is None
+        else IncidentStore(app.config["INCIDENT_FILE"])
+    )
     app.extensions["incident_store"] = store
 
     @app.before_request

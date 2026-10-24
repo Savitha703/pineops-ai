@@ -520,5 +520,7 @@ def read_log_request(max_bytes):
     return logs, is_sample or "# SAMPLE DATA" in logs
 
 
+app = create_app()
+
 if __name__ == "__main__":
-    create_app().run(host="127.0.0.1", port=int(os.getenv("PORT", "5000")), debug=False)
+    app.run(host="127.0.0.1", port=int(os.getenv("PORT", "5000")), debug=False)

@@ -1,12 +1,30 @@
-# PineOps AI — Gemini-Ready Incident Analyzer
+# PineOps AI — AI-Powered Incident Analyzer
 
-A working **Technology Operations Intern** case-study prototype for analyzing simulated application incidents. The UI is the original Flask + HTML/CSS/JavaScript dashboard. It identifies recurring errors, gives preliminary severity and probable causes, recommends read-only troubleshooting and escalation, and exports saved incident reports.
+**Incident Intelligence | Technology Operations**
 
-**The app uses Google Gemini by default.** Local-only rules remain available as an offline alternative. Gemini is **optional**: if no key is configured or the provider fails, the app still works and clearly labels its output `rule-based`. It never fabricates an AI success.
+PineOps AI is a working AI-powered incident analysis prototype designed to help Technology Operations and L1/L2 support engineers investigate issues in simulated application logs. It detects recurring failures, assesses incident severity, summarizes likely causes, recommends troubleshooting and escalation steps, and produces a shareable two-page PDF incident report.
+
+The application includes an **Ask AI About This Incident** chat assistant for follow-up investigation, with responses grounded in the saved incident evidence.
+
+**AI implementation:** PineOps AI uses Google Gemini for AI-generated investigation and conversational guidance. An offline, rule-based fallback remains available when AI is not configured or a provider request fails. The application distinguishes AI-generated findings from local rule-based results rather than claiming AI succeeded when it did not.
+
+> **Project status:** Demonstration prototype using synthetic logs only. It is not an official Pine Labs product or a production incident-management system.
+
+## Features
+
+- Upload `.log` and `.txt` application logs, or paste log text.
+- Detect repeated errors, affected services, failure patterns and timestamps.
+- Classify incidents as **Critical, High, Medium or Low**, with a reasoned preliminary assessment.
+- Generate AI-written incident summaries, root-cause hypotheses, potential-impact assessments, diagnostic checks and escalation guidance.
+- Keep observed log evidence separate from assumptions and hypotheses.
+- Ask conversational follow-up questions about a saved incident through **Ask AI About This Incident**.
+- Export a concise **two-page PDF incident report** with error details and available AI findings.
+- Review saved incident history and use sample payment/database logs for demonstrations.
+- Fall back to clearly labeled **local rules** when AI is unavailable.
 
 ## Quick start — Windows / VS Code
 
-Open a terminal inside the extracted `incident-analyzer` directory:
+Open a terminal in the `incident-analyzer` project directory:
 
 ```powershell
 py -m venv .venv
@@ -15,7 +33,7 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-Edit the new local `.env` file:
+Edit the new local `.env` file to configure your provider:
 
 ```dotenv
 AI_PROVIDER=gemini
@@ -25,15 +43,15 @@ MAX_LOG_BYTES=204800
 PORT=5000
 ```
 
-Replace `your_gemini_api_key_here` with a valid Gemini key from [Google AI Studio](https://aistudio.google.com/app/apikey). **Never edit `.env.example` with real credentials. Never commit `.env`.** The attached original ZIP included an `.env` file, so consider replacing/rotating its previous keys before sharing the project again.
+Get your own API key from [Google AI Studio](https://aistudio.google.com/app/apikey) and use a model available to your account. **Never put real credentials in `.env.example` or commit `.env` to Git.** Rotate any key that has previously been shared.
 
-Start the app:
+Start the application:
 
 ```powershell
 .\.venv\Scripts\python.exe app.py
 ```
 
-Open **http://127.0.0.1:5000**. In **Settings**, verify that the selected provider says **Google Gemini**, and the key is `Configured (not verified)`. That indicator checks presence, not live access. Navigate to **Analyze Logs** → load **Payment API** → click **Analyze Incident**. When AI succeeds, the report shows **AI-assisted** and separate **Google Gemini investigation notes**. If Gemini fails, the report clearly says **rule-based** and includes a warning.
+Open **http://127.0.0.1:5000**. Load a sample log under **Analyze Logs**, analyze the incident, inspect the AI findings and download the PDF report. Open a saved incident to ask follow-up questions in the chat assistant.
 
 ### macOS / Linux
 
@@ -41,13 +59,13 @@ Open **http://127.0.0.1:5000**. In **Settings**, verify that the selected provid
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 cp .env.example .env
-# Edit .env to add your own Gemini API key.
+# Edit .env to add your own API key.
 .venv/bin/python app.py
 ```
 
-### Check Gemini independently (uses a live request)
+### Check AI connectivity
 
-With `.env` set and your virtual environment active:
+With `.env` configured, run the optional Gemini diagnostic commands:
 
 ```powershell
 .\.venv\Scripts\python.exe check_gemini.py --metadata
@@ -55,76 +73,88 @@ With `.env` set and your virtual environment active:
 .\.venv\Scripts\python.exe check_gemini.py --analysis
 ```
 
-`--metadata` checks the selected model's metadata, **not** actual generation. The normal command submits a tiny `Reply with OK only` prompt. `--analysis` sends only a synthetic incident through the real JSON generation and validation path. These commands **may use your account quota** and do not write to incident history. Output includes sanitized success/failure categories, HTTP statuses (when provided), and timings, but no API key.
+The metadata check does **not** prove successful generation. The normal test makes a small live generation request, while `--analysis` exercises structured incident analysis using synthetic data. Live requests may consume API quota and do not save incidents.
 
-If you are demonstrating offline, use `AI_PROVIDER=rules` in `.env` and restart Flask.
+For a demonstration without an AI connection, set `AI_PROVIDER=rules` in `.env` and restart the server.
 
 ## How it works
 
 ```text
-Browser UI
-  → Flask POST /api/analyze
-  → validate, limit size, redact common secrets
-  → deterministic log parser: errors, patterns, counts, severity, impact uncertainty
-  → selected optional provider:
-       Gemini (default) / Local rules
-  → validate model JSON, require uncertainty and safe read-only suggestions
-  → persist safe JSON to data/incidents.json
-  → render evidence, troubleshooting, notes and downloadable report
+Browser dashboard
+  |
+  v
+Flask API (/api/analyze)
+  |
+  +--> Validate log input and size; redact common secrets
+  |
+  +--> Python parser: error patterns, counts, timestamps and severity
+  |
+  +--> AI investigation using Gemini (when available)
+  |      - Incident summary and potential impact
+  |      - Evidence-based root-cause hypotheses
+  |      - Diagnostic checks and escalation guidance
+  |
+  +--> Validate the AI response and label the analysis mode
+  |      - If AI is unavailable: clearly labeled local-rule fallback
+  |
+  +--> Save incident analysis locally
+  |
+  +--> Dashboard, follow-up AI chat and two-page PDF export
 ```
 
-The log parser stays authoritative for log counts, signal groups and preliminary severity. The LLM is used only to write tentative hypotheses and diagnostic guidance. The app never executes model-suggested operations. The Gemini request contains a bounded set of important **redacted** log lines and the preliminary analysis, reducing unnecessary provider latency and data volume.
+**Design principle:** Python remains authoritative for extracted log evidence, quantitative counts and rule-based severity. The AI formulates contextual hypotheses and suggested diagnostic actions. The application does not treat correlation as proof of root cause or execute AI-recommended operations.
 
-### Files
+### Project files
 
-| File | Responsibility |
+| File / directory | Responsibility |
 |---|---|
-| `app.py` | Flask routes, Gemini/offline mode, redaction and persistence |
-| `incident_analyzer.py` | Parsing, grouping, severity rules, evidence and local recommendations |
-| `gemini_service.py` | Gemini structured generation, errors, bounded retries, safe fallback |
-| `ai_validation.py` | Strict JSON shape, uncertainty checks and read-only diagnostics |
-| `incident_store.py` | Validated incident JSON with atomic writes |
-| `check_gemini.py` | Safe live model diagnostics (only when manually run) |
-| `sample_logs/` | Synthetic payment and database incident examples |
-| `tests/` | Automated offline tests, including the actual SDK request shape |
-| `PRESENTATION.md` | Ten-minute demo and Q&A script |
-| `REPAIR_REPORT.md` | What changed, verification results and remaining limitations |
+| `app.py` | Flask application, API routes, report generation and application configuration |
+| `incident_analyzer.py` | Log parsing, error grouping, preliminary severity and evidence extraction |
+| `gemini_service.py` | Gemini-powered incident analysis and API error handling |
+| `incident_chat.py` | Follow-up incident questions using saved evidence |
+| `ai_validation.py` | Validation and safety checks for structured AI outputs |
+| `incident_store.py` | Local persistence of saved incident analyses |
+| `check_gemini.py` | Optional Gemini API diagnostics |
+| `templates/` | Dashboard HTML |
+| `static/` | JavaScript, CSS and PineOps AI logo |
+| `sample_logs/` | Synthetic payment and database log samples |
+| `tests/` | Automated tests for parsing, routes, AI integration and storage |
+| `requirements.txt` | Python dependencies |
+| `.env.example` | Example environment configuration without secrets |
 
-The existing local history of **10 synthetic incidents** was retained in `data/incidents.json`. It is used in the dashboard totals and tagged as sample data, not production incidents.
-
-## Run tests
+## Run automated tests
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -q
 ```
 
-The tests are intentionally offline (Gemini calls are mocked) so they do not consume provider quota. The included `test_gemini_sdk_wire.py` checks that the installed `google-genai` SDK constructs a valid structured-generation HTTP request and parses a mock response. It does **not** verify your actual API key or Google's availability.
+The automated tests are designed to run without consuming Gemini API quota; AI responses are mocked where appropriate. Tests that mock the SDK verify integration behavior but do not establish that a real provider request will succeed.
 
-## Gemini troubleshooting
+## AI integration troubleshooting
 
-| Symptom | Likely cause and action |
+| Symptom | What to check |
 |---|---|
-| Settings says key not configured | Set `GEMINI_API_KEY` in **`.env` beside `app.py`**, not `.env.example`; restart. |
-| HTTP 400 invalid model | Use the exact ID `gemini-3.5-flash-lite`; check `GEMINI_MODEL` spelling. |
-| HTTP 401 / API key invalid | Create a valid Gemini API key and check restrictions; replace/rotate keys that were shared. |
-| HTTP 403 | Check Google project, API key permissions and API access. |
-| HTTP 404 | Selected model may not be available; check official [model IDs](https://ai.google.dev/gemini-api/docs/models). |
-| HTTP 429 | Rate limit, quota or billing constraint. Check Google AI Studio rate limits. |
-| HTTP 503 / 504 or timeout | Provider availability or request deadline. The app retries temporary errors only once, then uses local rules. Try again later or use offline mode for the demo. |
-| Report says `rule-based` | This is an intentional, honest fallback. Read the warning and run `check_gemini.py` to diagnose. |
+| API key not configured | Put `GEMINI_API_KEY` in `.env` next to `app.py`, then restart Flask. |
+| Invalid model / HTTP 400 or 404 | Check `GEMINI_MODEL` and whether your account can access that exact model ID. |
+| Authentication error / HTTP 401 or 403 | Review API key validity, restrictions and Google project access. |
+| Rate limit / HTTP 429 | Check available quota and billing or rate-limit settings. |
+| Timeout / HTTP 503 or 504 | Retry later, or demonstrate offline mode. |
+| Report indicates local rules | The AI request was not completed; inspect the displayed diagnostic message. |
+| Chat cannot answer from evidence | The saved incident may not contain enough log detail; provide more relevant synthetic logs. |
 
-Google lists `gemini-3.5-flash-lite` as a stable, lower-latency model with structured-output support. Availability can vary by account; see [official model docs](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite) and [troubleshooting](https://ai.google.dev/gemini-api/docs/troubleshooting).
+See the [Gemini API documentation](https://ai.google.dev/gemini-api/docs) for provider-specific model and API details.
 
 ## Supported inputs and limitations
 
-- Accept pasted text or `.log`/`.txt` UTF-8 uploads (including UTF-8 BOM); 200 KiB default limit.
-- Use sample/simulated data only for the assignment. API logs must be reviewed before sharing with a provider.
-- Common secrets are redacted, **not** full PII/compliance-grade scrubbing. Do not upload production logs with confidential content.
-- Severity and root-cause hypotheses are preliminary. Logs alone cannot confirm outage impact, customer impact, or an actual root cause.
-- Gemini request timeouts are currently 60 seconds per attempt, with one retry after one second for provider 408/500/502/503/504 or client timeout. If Google stays unavailable, the local fallback keeps the app usable.
-- `data/incidents.json` is single-user local JSON storage; not intended for production hosting, authentication or multi-process concurrency.
-- All AI notes require human review. No external service remediation is executed.
+- Accepts pasted log text and UTF-8 `.log`/`.txt` uploads, with a configurable input size limit (200 KiB by default).
+- Only **synthetic sample data** should be used for this public demo. Do not upload production logs or confidential incident information.
+- Redaction covers common credential patterns but is **not** a complete PII or compliance-grade sanitization solution.
+- Root-cause hypotheses and impact assessments are provisional; logs alone cannot establish customer impact or a confirmed root cause.
+- AI-generated suggestions require human review. The tool does not run remediation commands.
+- The follow-up chat uses saved incident evidence; it may not have access to every line in the original uploaded log file.
+- Saved incident history uses local JSON storage and is not designed for authenticated, concurrent or persistent production hosting.
+- On ephemeral hosting services, locally stored incident history can be lost when the service restarts or redeploys.
 
-## For your interview
+---
 
-Use the Payment API demo first, then the Database Errors demo. Show error patterns, severity rationale and how unknown impact is disclosed. Open a Gemini-assisted report **only if the live request actually succeeds**, otherwise demonstrate the honest rule-based fallback and explain how AI is integrated and tested. Finish by downloading a saved JSON report and showing the Settings page. See [PRESENTATION.md](PRESENTATION.md).
+**PineOps AI** is an independent educational case-study prototype developed for a Technology Operations assignment.

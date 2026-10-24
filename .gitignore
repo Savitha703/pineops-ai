@@ -1,0 +1,28 @@
+# API credentials
+.env
+.env.*
+!.env.example
+
+# Python virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local incident history
+data/
+
+# Test output
+test-results/
+
+# VS Code settings
+.vscode/
+
+# Backup and temporary files
+*_backup_*/
+groq_cleanup_backup_*/
+remove_groq_safely.py
+apply_pineops_branding.pyPRESENTATION.md

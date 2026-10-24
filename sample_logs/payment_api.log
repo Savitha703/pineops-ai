@@ -1,0 +1,12 @@
+# SAMPLE DATA — fictional payment API investigation
+2026-10-23T09:30:00Z INFO service=payment-api Service is accepting requests
+2026-10-23T09:30:02Z INFO service=payment-api POST /payments status=201 request_id=req-100
+2026-10-23T09:30:08Z ERROR service=payment-api Upstream gateway timeout after 3000ms request_id=req-101
+2026-10-23T09:30:09Z ERROR service=payment-api POST /payments status=504 request_id=req-101
+2026-10-23T09:30:12Z ERROR service=payment-api Upstream gateway timeout after 3100ms request_id=req-102
+2026-10-23T09:30:13Z ERROR service=payment-api POST /payments status=504 request_id=req-102
+2026-10-23T09:30:18Z WARN service=payment-api Retry budget is low
+2026-10-23T09:30:20Z ERROR service=payment-api Upstream gateway timeout after 3200ms request_id=req-103
+2026-10-23T09:30:21Z ERROR service=payment-api POST /payments status=504 request_id=req-103
+2026-10-23T09:30:24Z ERROR service=payment-api authentication failed for gateway client token=sample-token-not-real
+2026-10-23T09:30:30Z INFO service=payment-api Health endpoint status=200

@@ -1,0 +1,10 @@
+# SAMPLE DATA — fictional database connection investigation
+2026-10-23T10:10:00Z INFO service=orders-api Starting order lookup
+2026-10-23T10:10:04Z ERROR service=orders-api database connection refused host=database.internal port=5432
+2026-10-23T10:10:07Z ERROR service=orders-api database connection refused host=database.internal port=5432
+2026-10-23T10:10:09Z ERROR service=orders-api database connection refused host=database.internal port=5432
+2026-10-23T10:10:12Z ERROR service=orders-api database connection pool exhausted active=100
+2026-10-23T10:10:15Z ERROR service=orders-api database connection pool exhausted active=100
+2026-10-23T10:10:19Z ERROR service=orders-api database connection pool exhausted active=100
+2026-10-23T10:10:22Z ERROR service=orders-api GET /orders status=503 request_id=order-301
+2026-10-23T10:10:25Z WARN service=orders-api Investigation required; customer impact has not been verified
